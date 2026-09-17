@@ -1,25 +1,34 @@
-FROM scottyhardy/docker-wine:latest
+FROM scottyhardy/docker-wine:stable-11.0
 
-ARG HOME_DIR=/home/steam
-
-ENV DEBIAN_FRONTEND=noninteractive
 ENV WINEDEBUG=-all
 
-# Save original docker-wine entrypoint
+# Save the original docker-wine entrypoint
 RUN cp /usr/bin/entrypoint /usr/bin/docker-wine-entrypoint
 
-COPY entrypoint.sh /usr/bin/entrypoint
-RUN chmod +x /usr/bin/entrypoint
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY scripts/updateGame.sh /usr/local/bin/updateGame.sh
+COPY scripts/startGame.sh /usr/local/bin/startGame.sh
+
+RUN chmod +x \
+    /usr/local/bin/entrypoint.sh \
+    /usr/local/bin/updateGame.sh \
+    /usr/local/bin/startGame.sh
 
 RUN set -x && \
 	dpkg --add-architecture i386 && \
     apt-get update && \
-    apt-get install -y --no-install-recommends --no-install-suggests lib32stdc++6 lib32gcc-s1 ca-certificates curl && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends --no-install-suggests \
+      lib32stdc++6 \
+      lib32gcc-s1 \
+      ca-certificates \
+      curl && \
 	rm -rf /var/lib/apt/lists/*
 
-WORKDIR ${HOME_DIR}
+# The username and home directory are fixed in entrypoint.sh
+WORKDIR /home/steam
 
-RUN STEAMCMD_DIR="${HOME_DIR}/steamcmd" && \
+RUN HOME_DIR="/home/steam" && \
+    STEAMCMD_DIR="${HOME_DIR}/steamcmd" && \
     mkdir -p "${STEAMCMD_DIR}" "${HOME_DIR}/.steam/sdk32" "${HOME_DIR}/.steam/sdk64" && \
     curl -fsSL https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar -xz -C "${STEAMCMD_DIR}" && \
 	"${STEAMCMD_DIR}/steamcmd.sh" +quit && \
@@ -31,4 +40,11 @@ RUN STEAMCMD_DIR="${HOME_DIR}/steamcmd" && \
 	ln -s "${STEAMCMD_DIR}/steamcmd.sh" "${STEAMCMD_DIR}/steam.sh" && \
     ln -s "${STEAMCMD_DIR}/linux64/steamclient.so" "/usr/lib/x86_64-linux-gnu/steamclient.so"
 
-ENV PATH="${HOME_DIR}/steamcmd:${PATH}"
+ENV PATH="/home/steam/steamcmd:${PATH}"
+
+EXPOSE 7777/udp
+
+VOLUME /home/steam/game/AbioticFactor/Saved/SaveGames/Server
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["/usr/local/bin/startGame.sh"]

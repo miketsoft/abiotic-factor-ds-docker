@@ -1,9 +1,9 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-exec /home/steam/steamcmd/steamcmd.sh \
+exec "${USER_HOME}/steamcmd/steamcmd.sh" \
     +@sSteamCmdForcePlatformType windows \
-    +force_install_dir /home/steam/game \
+    +force_install_dir "${USER_HOME}/game" \
     +login anonymous \
     +app_update 2857200 \
     +quit

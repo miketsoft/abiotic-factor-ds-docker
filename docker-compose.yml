@@ -1,13 +1,12 @@
 services:
   abiotic-server:
     build:
-      context: '.'
-    image: abiotic-ds-image:latest
+      context: 'docker'
+    image: abiotic-ds-image:1.0
     container_name: abiotic-ds
     volumes:
       - "./game:/home/steam/game"
       - "./gameSaves:/home/steam/game/AbioticFactor/Saved/SaveGames/Server"
-      - "./scripts:/home/steam/scripts"
       - "./wine:/home/steam/.wine"
     environment:
       USER_UID: "${PUID:-1000}"
@@ -18,9 +17,9 @@ services:
       UsePerfThreads: "${USE_PERF_THREADS:-true}"
       MaxServerPlayers: "${MAX_SERVER_PLAYERS:-3}"
       UseQueryPort: "${USE_QUERY_PORT:-true}"
+      QueryPort: "${QUERY_PORT:-27015}"
       WorldSaveName: "${WORLD_SAVE_NAME:-Cascade}"
-    command: ["/home/steam/scripts/startGame.sh"]
     restart: unless-stopped
     ports:
       - "${PORT:-7777}:7777/udp"
-      - "${QUERY_PORT:-27015}:27015/udp"
+      - "${QUERY_PORT:-27015}:${QUERY_PORT:-27015}/udp"

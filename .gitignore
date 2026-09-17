@@ -1,5 +1,6 @@
 /.idea/
 /wine/
 /game/
+/gameSaves/
 
 /.env
